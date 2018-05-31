@@ -15,22 +15,22 @@ namespace ProceduralTextAdventure
          * 3: West
         */
         public string Name { get; protected set; }
-        public Door[] Doors { get; protected set; }
+        public Dictionary<string,Door> Doors { get; protected set; }
         public List<Item> Items { get; protected set; }
-        private string roomAdj;
+        private string RoomAdj;
 
         public string Description
         {
             get
             {
-                List<Door> doors = this.Doors.Where(d => d != null).ToList();
+                List<Door> doors = this.Doors.Where(k => k.Key != null).Select(v => v.Value).ToList();
                 List<Item> items = this.Items.Where(i => i != null).ToList();
-                string descript = $"You are standing in a {this.roomAdj} room with {doors.Count() } doors and {items.Count()} items.";
+                string descript = $"You are standing in a {this.RoomAdj} room with {doors.Count() } doors and {items.Count()} items.";
                 if (doors.Count() > 0)
                 {
                     descript += " You see doors to the ";
                     List<string> dirs = new List<string>();
-                    doors.ForEach(f => dirs.Add(f.Direction));
+                    doors.ForEach(f => dirs.Add(f.Facing));
                     descript += string.Join(", ", dirs.Take(dirs.Count - 1)) + (dirs.Count <= 1 ? "" : ", and ") + dirs.LastOrDefault() + ".";
                 }
                 if (items.Count() > 0)
@@ -47,36 +47,63 @@ namespace ProceduralTextAdventure
         public Room(string name, string adjective = "")
         {
             this.Name = name;
-            this.Doors = new Door[4];
+            this.Doors = new Dictionary<string, Door>();
             this.Items = new List<Item>();
-            this.roomAdj = adjective;
+            this.RoomAdj = adjective;
         }
-        public Room(string name, Door[] startingDoors, List<Item> startingItems, string adjective = "") : this(name, adjective)
+        public Room(string name, Dictionary<string,Door> startingDoors, List<Item> startingItems, string adjective = "") : this(name, adjective)
         {
             this.Items = startingItems;
             this.Doors = startingDoors;
         }
 
-        public void AddDoor(int direction, Room connection)
+        public bool AddDoorTo(int direction, Room connection)
         {
-            // Set the door in this room
-            Doors[direction] = new Door(direction, connection);
+            // Checks if the door direction exists and outputs the string for that direction
+            if (!Door.Directions.TryGetValue(direction, out string facing)) { return false; }
 
-            direction += ((direction < 2) ? 2 : -2);
-            // Set the door in the new room
-            connection.AddDoor(direction, new Door(direction, this));
+            // Trys to set the door in this room
+            if (!this.Doors.TryAdd(facing, new Door(direction, connection))) { return false; }
+
+            // New opposite direction
+            int oppDir = ((direction < 2) ? 2 : -2);
+
+            // Checks if the new opposite direction exists and outputs the string for the new direction
+            if (!Door.Directions.TryGetValue(oppDir, out string oppFace)) { return false; }
+            
+            // Adds the door to the connecting room
+            if (!connection.ConnectsTo(oppFace, oppDir, new Door(oppDir, this)))
+            {
+                // If the add fails, remove the door from this room as well (we don't want one way doors)
+                this.Doors.Remove(facing);
+                return false;
+            }
+            return true;
         }
-        public void AddDoor(int direction, Door door)
+        public bool AddDoorTo(string facing, Room connection)
         {
-            Doors[direction] = door;
+            foreach (KeyValuePair<int, string> kvp in Door.Directions)
+            {
+                if (kvp.Value == facing)
+                {
+                    if (!this.AddDoorTo(kvp.Key, connection)) { continue; }
+                    return true;
+                }
+            }
+            return false;
+        }
+        private bool ConnectsTo(string facing, int direction, Door door)
+        {
+            if (!this.Doors.TryAdd(facing, door)){ return false; }
+            return true;
         }
         public void AddItem(Item item)
         {
-            Items.Add(item);
+            this.Items.Add(item);
         }
         public bool RemoveItem(Item item)
         {
-            return Items.Remove(item);
+            return this.Items.Remove(item);
         }
     }
 

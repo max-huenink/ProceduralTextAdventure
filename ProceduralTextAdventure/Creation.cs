@@ -14,8 +14,9 @@ namespace ProceduralTextAdventure
         }
         void Start()
         {
+            Dictionary<string, Func<string[], string>> Commands = new Dictionary<string, Func<string[], string>>();
             Room start = new Room("Starter room", adjective: "A well lit but old looking room");
-            start.AddDoor(0, new Room("North"));
+            start.AddDoorTo(0, new Room("North"));
             Actor player = new Actor(start);
         }
     }

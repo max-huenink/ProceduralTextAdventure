@@ -7,11 +7,12 @@ namespace ProceduralTextAdventure
     class Door
     {
         public Room To;
-        public string Direction;
-        private readonly string[] directs = new string[] { "North", "East", "West", "South" };
+        public int Direction;
+        public static readonly Dictionary<int,string> Directions = new Dictionary<int, string>() { { 0, "North" }, { 1, "East" }, { 2, "West" }, { 3, "South" } };
+        public string Facing { get { return Directions[Direction]; } }
         public Door(int dir, Room to)
         {
-            Direction = directs[dir];
+            Direction = dir;
             To = to;
         }
     }
