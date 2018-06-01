@@ -9,7 +9,8 @@ namespace ProceduralTextAdventure
         public string Name { get; protected set; }
         public string Description { get; protected set; }
         private bool _InInventory;
-        public bool InInventory { get { return _InInventory; } set { _InInventory = value; if (value) { DeleteEvents(); } } }
+        public bool InInventory { get { return _InInventory; } set { _InInventory = value; if (value) { DeleteRoomEvents(); } } }
+
         public Item(
             string name,
             string description,
@@ -19,12 +20,12 @@ namespace ProceduralTextAdventure
             Action pull = null
             )
         {
-            Name = name;
-            Description = description;
-            if (take != null) { Take_Event += () => { take(this); }; }
-            if (touch != "") { Touch_Event += () => { Console.WriteLine(touch); }; }
-            if (push != null) { Push_Event += () => { push(); }; }
-            if (pull != null) { Pull_Event += () => { pull(); }; }
+            this.Name = name;
+            this.Description = description;
+            if (take != null) { this.Take_Event += () => { take(this); }; }
+            if (touch != "") { this.Touch_Event += () => { Console.WriteLine(touch); }; }
+            if (push != null) { this.Push_Event += () => { push(); }; }
+            if (pull != null) { this.Pull_Event += () => { pull(); }; }
         }
         public delegate void interact();
         public event interact Take_Event;
@@ -32,31 +33,52 @@ namespace ProceduralTextAdventure
         public event interact Push_Event;
         public event interact Pull_Event;
 
-        public void Take() => Do(Take_Event, "take");
-        public void Touch() => Do(Touch_Event, "touch", "reach");
-        public void Push() => Do(Push_Event, "push");
-        public void Pull() => Do(Pull_Event, "pull");
+        public event interact PlayerUse_Event;
+        public event interact RoomUse_Event;
 
-        private void Do(interact thing, string action, string no = "do")
+        // public string Use() => Do(this.PlayerUse_Event, "use");
+        public string Use() => "Not implemented yet.";
+
+        public string Look() => this.Description;
+        public string Take() => Do(this.Take_Event, "take");
+        public string Touch() => Do(this.Touch_Event, "touch", "reach");
+        public string Push() => Do(this.Push_Event, "push");
+        public string Pull() => Do(this.Pull_Event, "pull");
+
+        private string Do(interact thing, string action, string no = "do", bool t = false)
         {
             if (thing != null)
             {
-                Console.WriteLine($"You {action} the {this.Name}");
                 thing?.Invoke();
-                return;
+                return $"You {action} the {this.Name}";
             }
-            Console.WriteLine($"You can't {no} that");
+            return $"You can't {no} that";
         }
-        private void DeleteEvents()
+
+        private void DeleteRoomEvents()
         {
             Take_Event = null;
-            Touch_Event = null;
             Push_Event = null;
             Pull_Event = null;
+            RoomUse_Event = null;
+        }
+        private void DeleteAllEvents()
+        {
+            DeleteRoomEvents();
+            PlayerUse_Event = null;
+            Touch_Event = null;
         }
         ~Item()
         {
-            DeleteEvents();
+            DeleteRoomEvents();
+        }
+        public bool TakeItem(Item item)
+        {
+            if (Creation.Player.CurrentRoom.RemoveItem(item))
+            {
+                return Creation.Player.AddItem(item);
+            }
+            return false;
         }
     }
 }

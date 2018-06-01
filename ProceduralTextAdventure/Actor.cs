@@ -29,32 +29,26 @@ namespace ProceduralTextAdventure
         public Actor(Room startRoom, double hp = 5, double def = 5, double spd = 5, double att = 5)
         {
             MyStats = new Stats(hp, def, spd, att);
-            RoomChange_Event += () => { Console.WriteLine(CurrentRoom.Description); };
+            //RoomChange_Event += () => { Console.WriteLine(CurrentRoom.Description); };
             //InvChange_Event += () => { };
-
             CurrentRoom = startRoom;
         }
-        public void TakeItem(Item item)
+        public bool AddItem(Item item)
         {
-            if (CurrentRoom.RemoveItem(item))
-            {
-                AddItem(item);
-            }
-        }
-        public void AddItem(Item item)
-        {
-            if (item == null) { return; }
+            if (item == null) { return false; }
             Inv.Add(item);
             item.InInventory = true;
+            return true;
         }
         public bool RemoveItem(Item item)
         {
             if (item == null) { return false; }
             return Inv.Remove(item);
         }
-        public void ChangeRooms(Room newRoom)
+        public string ChangeRooms(Room newRoom)
         {
             CurrentRoom = newRoom;
+            return CurrentRoom.Description;
         }
     }
 }

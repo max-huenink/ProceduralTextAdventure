@@ -7,6 +7,7 @@ namespace ProceduralTextAdventure
 {
     class Room
     {
+        public static Dictionary<string,Room> Rooms = new Dictionary<string,Room>();
         /*
          * Directions
          * 0: North
@@ -16,7 +17,7 @@ namespace ProceduralTextAdventure
         */
         public string Name { get; protected set; }
         public Dictionary<string,Door> Doors { get; protected set; }
-        public List<Item> Items { get; protected set; }
+        public Dictionary<string,Item> Items { get; protected set; }
         private string RoomAdj;
 
         public string Description
@@ -24,7 +25,7 @@ namespace ProceduralTextAdventure
             get
             {
                 List<Door> doors = this.Doors.Where(k => k.Key != null).Select(v => v.Value).ToList();
-                List<Item> items = this.Items.Where(i => i != null).ToList();
+                List<Item> items = this.Items.Where(k => k.Key != null).Select(v => v.Value).ToList();
                 string descript = $"You are standing in a {this.RoomAdj} room with {doors.Count() } doors and {items.Count()} items.";
                 if (doors.Count() > 0)
                 {
@@ -46,12 +47,13 @@ namespace ProceduralTextAdventure
 
         public Room(string name, string adjective = "")
         {
+            if (!Rooms.TryAdd(name, this)) { return; }
             this.Name = name;
             this.Doors = new Dictionary<string, Door>();
-            this.Items = new List<Item>();
+            this.Items = new Dictionary<string, Item>();
             this.RoomAdj = adjective;
         }
-        public Room(string name, Dictionary<string,Door> startingDoors, List<Item> startingItems, string adjective = "") : this(name, adjective)
+        public Room(string name, Dictionary<string,Door> startingDoors, Dictionary<string,Item> startingItems, string adjective = "") : this(name, adjective)
         {
             this.Items = startingItems;
             this.Doors = startingDoors;
@@ -97,13 +99,14 @@ namespace ProceduralTextAdventure
             if (!this.Doors.TryAdd(facing, door)){ return false; }
             return true;
         }
-        public void AddItem(Item item)
+        public bool AddItem(Item item)
         {
-            this.Items.Add(item);
+            if (!this.Items.TryAdd(item.Name, item)) { return false; }
+            return true;
         }
         public bool RemoveItem(Item item)
         {
-            return this.Items.Remove(item);
+            return this.Items.Remove(item.Name);
         }
     }
 
