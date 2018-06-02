@@ -7,6 +7,8 @@ namespace ProceduralTextAdventure
 {
     class Room
     {
+        public static Dictionary<string,Room> extra = new Dictionary<string,Room>()
+        {{"new",new Room()}};
         public static Dictionary<string,Room> Rooms = new Dictionary<string,Room>();
         /*
          * Directions
