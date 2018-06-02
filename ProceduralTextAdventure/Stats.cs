@@ -13,7 +13,6 @@ namespace ProceduralTextAdventure
         public double SPD { get { return Values[2]; } }
         public double ATT { get { return Values[3]; } }
 
-
         public Stats()
         {
             Values = new double[4];

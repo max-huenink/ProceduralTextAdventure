@@ -43,10 +43,10 @@ namespace ProceduralTextAdventure
             Console.WriteLine(CurrentRoom.Description);
             while (true)
             {
-                string[] a = Console.ReadLine().Split(' ');
+                string[] a = Console.ReadLine().ToUpper().Split(' ');
                 if (a.Count() < 1) { continue; }
                 string x = a[0];
-                if (x == "exit") { return; }
+                if (x == "EXIT") { return; }
                 if (a.Count() < 2) { Console.WriteLine("You need to enter something else"); continue; }
                 string z = a[1];
                 if (!Commands.TryGetValue(x,out Func<string,string> y)) { Console.WriteLine("Not a valid command!"); }
@@ -56,78 +56,66 @@ namespace ProceduralTextAdventure
 
         void SetCommands()
         {
-            Commands.Add("go", i =>
+            Commands.Add("GO", i =>
             {
-                i = i.ToUpper().First<char>().ToString();
+                i = i[0].ToString();
                 if (!CurrentRoom.Doors.TryGetValue(i,out Door door)) { return "There is no door in that direction, is it spelled right?"; }
                 return Player.ChangeRooms(door.To);
             });
-            Commands.Add("check", i =>
+            Commands.Add("CHECK", i =>
             {
-                char c = i.ToUpper().First<char>();
-                List<string> x = new List<string>();
+                char c = i[0];
+                List<string> things = new List<string>();
                 string slot = "";
                 if (c == 'I')
                 {
                     if (Player.Inv.Count() == 0) { return "Your inventory has no items."; }
-                    Player.Inv.ForEach(j => x.Add(j.Name.ToUpper()));
+                    Player.Inv.ForEach(j => things.Add(j.Name.ToUpper()));
                     slot = "in your inventory";
                 }
                 if (c == 'E')
                 {
                     if (Player.Equip.Where(k => k != null).Count() == 0) { return "You have no items equipped."; }
-                    Player.Equip.ToList().ForEach(j => x.Add(j.Name.ToUpper()));
+                    Player.Equip.ToList().ForEach(j => things.Add(j.Name.ToUpper()));
                     slot = "equipped";
                 }
                 if (slot != "")
                 {
-                    string t = Stringify(x);
-                    return $"You have {t} {slot}.";
+                    return $"You have {Stringify(things)} {slot}.";
                 }
                 return "That is not something you can check";
             });
-            Commands.Add("take", i =>
+            Commands.Add("TAKE", i =>
             {
-                Item item = GetItem(i);
-                if (item.Name == null) { return item.Description; }
-                return (item.Take());
+                return GetItem(i, "TAKE");
+
             });
-            Commands.Add("touch", i =>
+            Commands.Add("TOUCH", i =>
             {
-                Item item = GetItem(i);
-                if (item.Name == null) { return item.Description; }
-                return (item.Touch());
+                return GetItem(i, "TOUCH");
             });
-            Commands.Add("inspect", i =>
+            Commands.Add("INSPECT", i =>
             {
-                Item item = GetItem(i);
-                if (item.Name == null) { return item.Description; }
-                return (item.Look());
+                return GetItem(i, "LOOK");
             });
-            Commands.Add("push", i =>
+            Commands.Add("PUSH", i =>
             {
-                Item item = GetItem(i);
-                if (item.Name == null) { return item.Description; }
-                return (item.Push());
+                return GetItem(i, "PUSH");
             });
-            Commands.Add("pull", i =>
+            Commands.Add("PULL", i =>
             {
-                Item item = GetItem(i);
-                if (item.Name == null) { return item.Description; }
-                return (item.Pull());
+                return GetItem(i, "PULL");
             });
-            Commands.Add("use", i =>
+            Commands.Add("USE", i =>
             {
-                Item item = GetItem(i);
-                if (item.Name == null) { return item.Description; }
-                return (item.Use());
+                return GetItem(i, "USE");
             });
         }
-        Item GetItem(string i)
+        string GetItem(string name, string actionIdentifier)
         {
-            i = i.ToUpper();
-            if(!CurrentRoom.Items.TryGetValue(i,out Item item)) { return new Item(null, "That item doesn't exist, is it spelled right?"); }
-            return item;
+            if(!CurrentRoom.Items.TryGetValue(name,out Item item)) { return "That item doesn't exist, is it spelled right?"; }
+            if(!item.Actions.TryGetValue(actionIdentifier,out Func<string> action)) { return "That action doesn't exist."; }
+            return action?.Invoke();
         }
         public string Stringify(List<string> list, bool grammar = true)
         {

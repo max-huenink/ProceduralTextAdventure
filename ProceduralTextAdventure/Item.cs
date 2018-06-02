@@ -6,6 +6,7 @@ namespace ProceduralTextAdventure
 {
     class Item
     {
+        public Dictionary<string, Func<string>> Actions = new Dictionary<string, Func<string>>();
         public string Name { get; protected set; }
         public string Description { get; protected set; }
         private string Touched;
@@ -29,6 +30,13 @@ namespace ProceduralTextAdventure
             if (touch != "") { this.Touched = touch; }
             if (pushable) { this.Push_Event += () => { return PushItem(this); }; }
             if (pullable) { this.Pull_Event += () => { return PullItem(this); }; }
+
+            Actions.Add("USE", Use);
+            Actions.Add("LOOK", Look);
+            Actions.Add("TAKE", Take);
+            Actions.Add("TOUCH", Touch);
+            Actions.Add("PUSH", Push);
+            Actions.Add("PULL", Pull);
         }
         public delegate bool interact();
         public event interact Take_Event;
@@ -46,12 +54,12 @@ namespace ProceduralTextAdventure
         public string Touch() => this.Touched;
         public string Push() => Do(this.Push_Event, "push");
         public string Pull() => Do(this.Pull_Event, "pull");
-
+        
         private string Do(interact thing, string action)
         {
             if (thing != null)
             {
-                if (!(bool)thing?.Invoke()) { return $"{action}ing the {this.Name} failed."; }
+                if (!(bool)thing?.Invoke()) return $"{action}ing the {this.Name} failed.";
                 return $"You {action} the {this.Name}.";
             }
             //if ((bool)thing?.Invoke()) { return "thing"; }
