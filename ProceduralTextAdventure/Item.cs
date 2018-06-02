@@ -8,6 +8,7 @@ namespace ProceduralTextAdventure
     {
         public string Name { get; protected set; }
         public string Description { get; protected set; }
+        private string Touched;
         private bool _InInventory;
         public bool InInventory { get { return _InInventory; } set { _InInventory = value; if (value) { DeleteRoomEvents(); } } }
 
@@ -15,21 +16,22 @@ namespace ProceduralTextAdventure
             string name,
             string description,
             string touch = "",
-            Action<Item> take = null,
-            Action push = null,
-            Action pull = null
+            bool takeable = false,
+            bool pushable = false,
+            bool pullable = false,
+            bool interactable = false
             )
         {
-            this.Name = name;
+            if (name != null) { this.Name = name.ToUpper(); }
             this.Description = description;
-            if (take != null) { this.Take_Event += () => { take(this); }; }
-            if (touch != "") { this.Touch_Event += () => { Console.WriteLine(touch); }; }
-            if (push != null) { this.Push_Event += () => { push(); }; }
-            if (pull != null) { this.Pull_Event += () => { pull(); }; }
+            if (takeable) { this.Take_Event += () => { return GiveItem(this); }; }
+            this.Touched = $"You can't reach the {this.Name}";
+            if (touch != "") { this.Touched = touch; }
+            if (pushable) { this.Push_Event += () => { return PushItem(this); }; }
+            if (pullable) { this.Pull_Event += () => { return PullItem(this); }; }
         }
-        public delegate void interact();
+        public delegate bool interact();
         public event interact Take_Event;
-        public event interact Touch_Event;
         public event interact Push_Event;
         public event interact Pull_Event;
 
@@ -41,18 +43,19 @@ namespace ProceduralTextAdventure
 
         public string Look() => this.Description;
         public string Take() => Do(this.Take_Event, "take");
-        public string Touch() => Do(this.Touch_Event, "touch", "reach");
+        public string Touch() => this.Touched;
         public string Push() => Do(this.Push_Event, "push");
         public string Pull() => Do(this.Pull_Event, "pull");
 
-        private string Do(interact thing, string action, string no = "do", bool t = false)
+        private string Do(interact thing, string action)
         {
             if (thing != null)
             {
-                thing?.Invoke();
-                return $"You {action} the {this.Name}";
+                if (!(bool)thing?.Invoke()) { return $"{action}ing the {this.Name} failed."; }
+                return $"You {action} the {this.Name}.";
             }
-            return $"You can't {no} that";
+            //if ((bool)thing?.Invoke()) { return "thing"; }
+            return $"You can't {action} that.";
         }
 
         private void DeleteRoomEvents()
@@ -66,19 +69,26 @@ namespace ProceduralTextAdventure
         {
             DeleteRoomEvents();
             PlayerUse_Event = null;
-            Touch_Event = null;
         }
         ~Item()
         {
             DeleteRoomEvents();
         }
-        public bool TakeItem(Item item)
+        public bool GiveItem(Item item)
         {
-            if (Creation.Player.CurrentRoom.RemoveItem(item))
+            if (Creation.Instance.CurrentRoom.RemoveItem(item))
             {
-                return Creation.Player.AddItem(item);
+                return Creation.Instance.Player.AddItem(item);
             }
             return false;
+        }
+        public bool PushItem(Item item)
+        {
+            throw new NotImplementedException();
+        }
+        public bool PullItem(Item item)
+        {
+            throw new NotImplementedException();
         }
     }
 }
