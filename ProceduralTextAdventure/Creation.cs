@@ -13,7 +13,7 @@ namespace ProceduralTextAdventure
         public static Creation Instance;
         public static Random RND = new Random();
 
-        public Dictionary<string, Func<string, string>> Commands { get; protected set; }
+        public Dictionary<string, Func<string[], string>> Commands { get; protected set; }
         public Item[] Items = new Item[]
         {
             new Item("Ball", "A red ball"),
@@ -31,7 +31,7 @@ namespace ProceduralTextAdventure
                 Instance = this;
             }
             
-            Commands = new Dictionary<string, Func<string, string>>();
+            Commands = new Dictionary<string, Func<string[], string>>();
             SetCommands();
 
             Room start = new Room("Starter room", adjective: "a well lit but old looking");
@@ -45,7 +45,7 @@ namespace ProceduralTextAdventure
 
             
             Console.WriteLine("These are the commands you can use: ");
-            foreach (KeyValuePair<string,Func<string,string>> kvp in Commands)
+            foreach (KeyValuePair<string,Func<string[],string>> kvp in Commands)
             {
                 Console.WriteLine(kvp.Key);
             }
@@ -53,28 +53,30 @@ namespace ProceduralTextAdventure
             Console.WriteLine(CurrentRoom.Description);
             while (true)
             {
-                string[] a = Console.ReadLine().ToUpper().Split(' ');
-                if (a.Count() < 1) { continue; }
-                string x = a[0];
-                if (x == "EXIT") { return; }
-                if (a.Count() < 2) { Console.WriteLine("You need to enter something else"); continue; }
-                string z = a[1];
-                if (!Commands.TryGetValue(x,out Func<string,string> y)) { Console.WriteLine("Not a valid command!"); }
-                Console.WriteLine(y?.Invoke(z));
+                string[] input = Console.ReadLine().ToUpper().Split(' ');
+                if (input.Count() < 1) { continue; }
+                string cmd = input[0];
+                if (cmd == "EXIT") { return; }
+                if (input.Count() < 2) { Console.WriteLine("You need to enter something else"); continue; }
+                if (!Commands.TryGetValue(cmd,out Func<string[],string> y)) { Console.WriteLine("Not a valid command!"); }
+                Console.WriteLine(y?.Invoke(input));
             }
         }
-
+        string[] prompt()
+        {
+            return Console.ReadLine().ToUpper().Split(' ');
+        }
         void SetCommands()
         {
             Commands.Add("GO", i =>
             {
-                i = i[0].ToString();
-                if (!CurrentRoom.Doors.TryGetValue(i,out Door door)) { return "There is no door in that direction, is it spelled right?"; }
+                string x = i[1][0].ToString();
+                if (!CurrentRoom.Doors.TryGetValue(x,out Door door)) { return "There is no door in that direction, is it spelled right?"; }
                 return Player.ChangeRooms(door.To);
             });
             Commands.Add("CHECK", i =>
             {
-                char c = i[0];
+                char c = i[1][0];
                 List<string> things = new List<string>();
                 string slot = "";
                 if (c == 'I')
@@ -95,31 +97,13 @@ namespace ProceduralTextAdventure
                 }
                 return "That is not something you can check";
             });
-            Commands.Add("TAKE", i =>
-            {
-                return GetItem(i, "TAKE");
-
-            });
-            Commands.Add("TOUCH", i =>
-            {
-                return GetItem(i, "TOUCH");
-            });
-            Commands.Add("INSPECT", i =>
-            {
-                return GetItem(i, "LOOK");
-            });
-            Commands.Add("PUSH", i =>
-            {
-                return GetItem(i, "PUSH");
-            });
-            Commands.Add("PULL", i =>
-            {
-                return GetItem(i, "PULL");
-            });
-            Commands.Add("USE", i =>
-            {
-                return GetItem(i, "USE");
-            });
+            Commands.Add("TAKE", i => GetItem(i[1], "TAKE"));
+            Commands.Add("TOUCH", i => GetItem(i[1], "TOUCH"));
+            Commands.Add("INSPECT", i => GetItem(i[1], "LOOK"));
+            Commands.Add("LOOK", i => GetItem(i[2], "LOOK"));
+            Commands.Add("PUSH", i => GetItem(i[1], "PUSH"));
+            Commands.Add("PULL", i => GetItem(i[1], "PULL"));
+            Commands.Add("USE", i => GetItem(i[1], "USE"));
         }
         string GetItem(string name, string actionIdentifier)
         {
