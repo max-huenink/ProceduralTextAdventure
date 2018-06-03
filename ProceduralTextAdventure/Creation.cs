@@ -62,8 +62,9 @@ namespace ProceduralTextAdventure
                 Console.WriteLine(y?.Invoke(input));
             }
         }
-        string[] prompt()
+        string[] Prompt(string text="Command")
         {
+            Console.Write($"{text}: ");
             return Console.ReadLine().ToUpper().Split(' ');
         }
         void SetCommands()
