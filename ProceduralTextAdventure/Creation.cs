@@ -38,7 +38,7 @@ namespace ProceduralTextAdventure
             if (!start.AddDoorTo(0, new Room("Other"))) { return; }
             Player = new Actor(start);
             Items = PickRandomItems(Items, 3, start).ToArray();
-            Items = PickRandomItems(Items, 3, start.ConnectedRooms["N"]).ToArray();
+            Items = PickRandomItems(Items, 3, start.Rooms["N"]).ToArray();
             //start.AddItem(new Item("Apple","A delicious looking red apple",touch:"It feels like an apple.",takeable:true));
             //start.AddItem(new Item("Ball", "A red ball"));
             //start.Doors["N"].To.AddItem(new Item("Sword", "A shiny metal sword", touch: "It is cool to the touch", takeable: true));

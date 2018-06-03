@@ -7,7 +7,7 @@ namespace ProceduralTextAdventure
 {
     class Room
     {
-        public static Dictionary<string,Room> Rooms = new Dictionary<string,Room>();
+        public static Dictionary<string,Room> AllRooms = new Dictionary<string,Room>();
         /*
          * Directions
          * 0: North
@@ -16,9 +16,9 @@ namespace ProceduralTextAdventure
          * 3: West
         */
         public string Name { get; protected set; }
+        public Dictionary<string, Room> Rooms { get; protected set; }
         public Dictionary<string,Door> Doors { get; protected set; }
         public Dictionary<string,Item> Items { get; protected set; }
-        public Dictionary<string,Room> ConnectedRooms { get; protected set; }
         private string RoomAdj;
 
         public string Description
@@ -50,16 +50,23 @@ namespace ProceduralTextAdventure
 
         public Room(string name, string adjective = "a")
         {
-            if (!Rooms.TryAdd(name, this)) { return; }
+            if (!AllRooms.TryAdd(name, this)) { return; }
             this.Name = name;
+            this.Rooms = new Dictionary<string, Room>();
             this.Doors = new Dictionary<string, Door>();
             this.Items = new Dictionary<string, Item>();
             this.RoomAdj = adjective;
         }
-        public Room(string name, Dictionary<string,Door> startingDoors, Dictionary<string,Item> startingItems, string adjective = "a") : this(name, adjective)
+        public Room(
+            string name,
+            Dictionary<string,Room> startingRooms,
+            Dictionary<string,Door> startingDoors,
+            Dictionary<string,Item> startingItems,
+            string adjective = "a") : this(name, adjective)
         {
-            this.Items = startingItems;
+            this.Rooms = startingRooms;
             this.Doors = startingDoors;
+            this.Items = startingItems;
         }
 
         public bool AddDoorTo(int direction, Room connection, bool oneWay = false)
@@ -69,7 +76,7 @@ namespace ProceduralTextAdventure
             facing = facing[0].ToString();
             // Trys to set the door in this room
             if (!this.Doors.TryAdd(facing, new Door(direction, connection, this))) { return false; }
-            if (!this.ConnectedRooms.TryAdd(facing, connection)) { this.Doors.Remove(facing); return false; }
+            if (!this.Rooms.TryAdd(facing, connection)) { this.Doors.Remove(facing); return false; }
 
             if (oneWay) { return true; }
             
@@ -104,7 +111,7 @@ namespace ProceduralTextAdventure
         {
             if (facing != 'N' && facing != 'E' && facing != 'S' && facing != 'W') { return false; }
             if (!this.Doors.TryAdd(facing.ToString(), door)){ return false; }
-            if (!this.ConnectedRooms.TryAdd(facing.ToString(), room)) { this.Doors.Remove(facing.ToString()); return false; }
+            if (!this.Rooms.TryAdd(facing.ToString(), room)) { this.Doors.Remove(facing.ToString()); return false; }
             return true;
         }
         public bool AddItem(Item item)
