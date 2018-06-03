@@ -8,7 +8,7 @@ namespace ProceduralTextAdventure
     {
         public Room To;
         public int Direction;
-        public static readonly Dictionary<int,string> Directions = new Dictionary<int, string>() { { 0, "North" }, { 1, "East" }, { 2, "South" }, { 3, "West" } };
+        public static readonly Dictionary<int,string> Directions = new Dictionary<int, string>() { { 0, "NORTH" }, { 1, "EAST" }, { 2, "SOUTH" }, { 3, "WEST" } };
         public string Facing { get { return Directions[Direction]; } }
         public Door(int dir, Room to)
         {
