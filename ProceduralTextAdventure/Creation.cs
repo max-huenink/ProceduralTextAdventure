@@ -11,8 +11,15 @@ namespace ProceduralTextAdventure
         static void Main(string[] args) => new Creation().Start();
 
         public static Creation Instance;
+        public static Random RND = new Random();
 
         public Dictionary<string, Func<string, string>> Commands { get; protected set; }
+        public Item[] Items = new Item[]
+        {
+            new Item("Ball", "A red ball"),
+            new Item("Sword", "A shiny metal sword", touch: "It is cool to the touch", takeable: true),
+            new Item("Apple","A delicious looking red apple",touch:"It feels like an apple.",takeable:true),
+        };
 
         public Actor Player { get; protected set; }
         public Room CurrentRoom { get { return Player.CurrentRoom; } }
@@ -23,15 +30,18 @@ namespace ProceduralTextAdventure
             {
                 Instance = this;
             }
-
+            
             Commands = new Dictionary<string, Func<string, string>>();
             SetCommands();
+
             Room start = new Room("Starter room", adjective: "a well lit but old looking");
-            start.AddDoorTo(0, new Room("North"));
+            if (!start.AddDoorTo(0, new Room("Other"))) { return; }
             Player = new Actor(start);
-            start.AddItem(new Item("Apple","A delicious looking red apple",touch:"It feels like an apple.",takeable:true));
-            start.AddItem(new Item("Ball", "A red ball"));
-            start.Doors["N"].To.AddItem(new Item("Sword", "A shiny metal sword", touch: "It is cool to the touch", takeable: true));
+            Items = PickRandomItems(Items, 3, start).ToArray();
+            Items = PickRandomItems(Items, 3, start.Rooms["N"]).ToArray();
+            //start.AddItem(new Item("Apple","A delicious looking red apple",touch:"It feels like an apple.",takeable:true));
+            //start.AddItem(new Item("Ball", "A red ball"));
+            //start.Doors["N"].To.AddItem(new Item("Sword", "A shiny metal sword", touch: "It is cool to the touch", takeable: true));
 
             
             Console.WriteLine("These are the commands you can use: ");
@@ -131,6 +141,30 @@ namespace ProceduralTextAdventure
                 newList.Add($"{a} {s}");
             }
             return string.Join(", ", newList.Take(newList.Count - 1)) + (newList.Count <= 1 ? "" : ", and ") + newList.LastOrDefault();
+        }
+        public IEnumerable<Item> PickRandomItems(IEnumerable<Item> x, int number, Room room)
+        {
+            number++;
+            if (number > x.Count()) { number = x.Count(); }
+            for (int i = 0; i < number - 1; i++)
+            {
+                Item[] y = x.ToArray();
+                int index = RND.Next(0, y.Where(j => j != null).Count());
+                Item item = y[index];
+                room.AddItem(item);
+                y[index] = null;
+                x = y.OrderBy(k => k == null);
+            }
+            return x;
+        }
+        public Room PickRandomRoom(IEnumerable<Room> x)
+        {
+            for (int i = 0; i < x.Count(); i++)
+            {
+
+                int index = RND.Next(0, 1);
+            }
+            return new Room("empty");
         }
     }
 }

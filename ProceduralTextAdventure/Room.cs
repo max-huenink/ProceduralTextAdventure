@@ -7,6 +7,7 @@ namespace ProceduralTextAdventure
 {
     class Room
     {
+        public static Dictionary<string,Room> AllRooms = new Dictionary<string,Room>();
         /*
          * Directions
          * 0: North
@@ -49,45 +50,53 @@ namespace ProceduralTextAdventure
 
         public Room(string name, string adjective = "a")
         {
-            if (!Rooms.TryAdd(name, this)) { return; }
+            if (!AllRooms.TryAdd(name, this)) { return; }
             this.Name = name;
             this.Rooms = new Dictionary<string, Room>();
             this.Doors = new Dictionary<string, Door>();
             this.Items = new Dictionary<string, Item>();
             this.RoomAdj = adjective;
         }
-        public Room(string name, Dictionary<string,Room> startingRooms, Dictionary<string,Door> startingDoors, Dictionary<string,Item> startingItems, string adjective = "a") : this(name, adjective)
+        public Room(
+            string name,
+            Dictionary<string,Room> startingRooms,
+            Dictionary<string,Door> startingDoors,
+            Dictionary<string,Item> startingItems,
+            string adjective = "a") : this(name, adjective)
         {
             this.Rooms = startingRooms;
             this.Doors = startingDoors;
             this.Items = startingItems;
         }
 
-        public bool AddDoorTo(int direction, Room connection)
+        public bool AddDoorTo(int direction, Room connection, bool oneWay = false)
         {
             // Checks if the door direction exists and outputs the string for that direction
             if (!Door.Directions.TryGetValue(direction, out string facing)) { return false; }
-
+            facing = facing[0].ToString();
             // Trys to set the door in this room
-            if (!this.Doors.TryAdd(facing[0].ToString(), new Door(direction, connection))) { return false; }
+            if (!this.Doors.TryAdd(facing, new Door(direction, connection, this))) { return false; }
+            if (!this.Rooms.TryAdd(facing, connection)) { this.Doors.Remove(facing); return false; }
 
+            if (oneWay) { return true; }
+            
             // New opposite direction
             int oppDir = ((direction < 2) ? 2 : -2);
 
             // Checks if the new opposite direction exists and outputs the string for the new direction
             if (!Door.Directions.TryGetValue(oppDir, out string oppFace)) { return false; }
-            
             // Adds the door to the connecting room
-            if (!connection.ConnectsTo(oppFace[0], oppDir, this, new Door(oppDir, this)))
+            if (!connection.ConnectsTo(oppFace[0], oppDir, this, new Door(oppDir, this, connection)))
             {
                 // If the add fails, remove the door from this room as well (we don't want one way doors)
-                this.Doors.Remove(facing[0].ToString());
+                this.Doors.Remove(facing);
                 return false;
             }
             return true;
         }
         public bool AddDoorTo(string facing, Room connection)
         {
+            facing = facing.ToUpper();
             foreach (KeyValuePair<int, string> kvp in Door.Directions)
             {
                 if (kvp.Value == facing)
@@ -107,6 +116,7 @@ namespace ProceduralTextAdventure
         }
         public bool AddItem(Item item)
         {
+            if (item == null) { return false; }
             if (!this.Items.TryAdd(item.Name, item)) { return false; }
             return true;
         }

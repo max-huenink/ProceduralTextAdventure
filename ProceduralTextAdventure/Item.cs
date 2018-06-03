@@ -6,12 +6,13 @@ namespace ProceduralTextAdventure
 {
     class Item
     {
+        public Stats Stats;
         public Dictionary<string, Func<string>> Actions = new Dictionary<string, Func<string>>();
         public string Name { get; protected set; }
         public string Description { get; protected set; }
         private string Touched;
         private bool _InInventory;
-        public bool InInventory { get { return _InInventory; } set { _InInventory = value; if (value) { DeleteRoomEvents(); } } }
+        public bool InInventory { get { return _InInventory; } set { _InInventory = value; if (value) { this.DeleteRoomEvents(); } } }
 
         public Item(
             string name,
@@ -20,23 +21,26 @@ namespace ProceduralTextAdventure
             bool takeable = false,
             bool pushable = false,
             bool pullable = false,
-            bool interactable = false
+            bool interactable = false,
+            Stats stats = null
             )
         {
-            if (name != null) { this.Name = name.ToUpper(); }
-            this.Description = description;
-            if (takeable) { this.Take_Event += () => { return GiveItem(this); }; }
-            this.Touched = $"You can't reach the {this.Name}";
-            if (touch != "") { this.Touched = touch; }
-            if (pushable) { this.Push_Event += () => { return PushItem(this); }; }
-            if (pullable) { this.Pull_Event += () => { return PullItem(this); }; }
+            Stats = new Stats(0, 0, 0, 0);
+            if (name != null) { Name = name.ToUpper(); }
+            Description = description;
+            if (takeable) { Take_Event += () => { return GiveItem(this); }; }
+            Touched = $"You can't reach the {Name}";
+            if (touch != "") { Touched = touch; }
+            if (pushable) { Push_Event += () => { return PushItem(this); }; }
+            if (pullable) { Pull_Event += () => { return PullItem(this); }; }
+            if (stats != null) { Stats += stats; }
 
-            Actions.Add("USE", Use);
-            Actions.Add("LOOK", Look);
-            Actions.Add("TAKE", Take);
-            Actions.Add("TOUCH", Touch);
-            Actions.Add("PUSH", Push);
-            Actions.Add("PULL", Pull);
+            this.Actions.Add("USE", this.Use);
+            this.Actions.Add("LOOK", this.Look);
+            this.Actions.Add("TAKE", this.Take);
+            this.Actions.Add("TOUCH", this.Touch);
+            this.Actions.Add("PUSH", this.Push);
+            this.Actions.Add("PULL", this.Pull);
         }
         public delegate bool interact();
         public event interact Take_Event;
@@ -49,9 +53,9 @@ namespace ProceduralTextAdventure
         // public string Use() => Do(this.PlayerUse_Event, "use");
         public string Use() => "Not implemented yet.";
 
-        public string Look() => this.Description;
+        public string Look() => Description;
         public string Take() => Do(this.Take_Event, "take");
-        public string Touch() => this.Touched;
+        public string Touch() => Touched;
         public string Push() => Do(this.Push_Event, "push");
         public string Pull() => Do(this.Pull_Event, "pull");
         
@@ -59,8 +63,8 @@ namespace ProceduralTextAdventure
         {
             if (thing != null)
             {
-                if (!(bool)thing?.Invoke()) return $"{action}ing the {this.Name} failed.";
-                return $"You {action} the {this.Name}.";
+                if (!(bool)thing?.Invoke()) return $"{action}ing the {Name} failed.";
+                return $"You {action} the {Name}.";
             }
             //if ((bool)thing?.Invoke()) { return "thing"; }
             return $"You can't {action} that.";
@@ -68,10 +72,10 @@ namespace ProceduralTextAdventure
 
         private void DeleteRoomEvents()
         {
-            Take_Event = null;
-            Push_Event = null;
-            Pull_Event = null;
-            RoomUse_Event = null;
+            this.Take_Event = null;
+            this.Push_Event = null;
+            this.Pull_Event = null;
+            this.RoomUse_Event = null;
         }
         private void DeleteAllEvents()
         {
