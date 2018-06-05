@@ -33,9 +33,6 @@ namespace ProceduralTextAdventure
 
             Items = PickRandomItems(Items, 3, start).ToArray();
             Items = PickRandomItems(Items, 3, start.Rooms["N"]).ToArray();
-            //start.AddItem(new Item("Apple","A delicious looking red apple",touch:"It feels like an apple.",takeable:true));
-            //start.AddItem(new Item("Ball", "A red ball"));
-            //start.Doors["N"].To.AddItem(new Item("Sword", "A shiny metal sword", touch: "It is cool to the touch", takeable: true));
 
             
             Console.WriteLine("These are the commands you can use: ");
@@ -58,7 +55,6 @@ namespace ProceduralTextAdventure
             {
                 string[] input = Prompt();
                 if (input.Count() < 1) { continue; }
-                //string cmd = input[0];
                 if (input[0] == "EXIT" || input[0] == "END")
                 {
                     if (Prompt("Are you sure you want to exit? (Y/N)\n")[0] == "Y")
@@ -67,9 +63,6 @@ namespace ProceduralTextAdventure
                         continue;
                     }
                 }
-                //if (input.Count() < 2) { Console.WriteLine("You need to enter something else"); continue; }
-                //if (!Commands.TryGetValue(cmd, out Func<string[], string> y)) { Console.WriteLine("Not a valid command!"); }
-                //Console.WriteLine(y?.Invoke(input));
                 GameState.Player.Act(input, input[0]);
             }
         }

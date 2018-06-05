@@ -9,6 +9,5 @@ namespace ProceduralTextAdventure
         public Player Player;
         public Room CurrentRoom { get { return Player.CurrentRoom; } }
         public Random RND;
-        // Will have stuff soon
     }
 }
