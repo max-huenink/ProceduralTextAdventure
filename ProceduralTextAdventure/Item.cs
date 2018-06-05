@@ -4,78 +4,69 @@ using System.Text;
 
 namespace ProceduralTextAdventure
 {
-    class Item
+    class Item : Thing
     {
-        public Stats Stats;
-        public Dictionary<string, Func<string>> Actions = new Dictionary<string, Func<string>>();
         public string Name { get; protected set; }
-        public string Description { get; protected set; }
         private string Touched;
         private bool _InInventory;
         public bool InInventory { get { return _InInventory; } set { _InInventory = value; if (value) { this.DeleteRoomEvents(); } } }
 
         public Item(
+            GameState gameState,
             string name,
             string description,
             string touch = "",
             bool takeable = false,
             bool pushable = false,
             bool pullable = false,
-            bool interactable = false,
-            Stats stats = null
-            )
+            bool interactable = false
+            ) : base(gameState)
         {
-            Stats = new Stats(0, 0, 0, 0);
-            if (name != null) { Name = name.ToUpper(); }
+            Name = name.ToUpper();
             Description = description;
-            if (takeable) { Take_Event += () => { return GiveItem(this); }; }
+            if (takeable) { Takeable += (Actor a) => { return GiveItem(a); }; }
             Touched = $"You can't reach the {Name}";
             if (touch != "") { Touched = touch; }
-            if (pushable) { Push_Event += () => { return PushItem(this); }; }
-            if (pullable) { Pull_Event += () => { return PullItem(this); }; }
-            if (stats != null) { Stats += stats; }
+            if (pushable) { Pushable += (Actor a) => { return PushItem(a); }; }
+            if (pullable) { Pullable += (Actor a) => { return PullItem(a); }; }
 
-            this.Actions.Add("USE", this.Use);
-            this.Actions.Add("LOOK", this.Look);
-            this.Actions.Add("TAKE", this.Take);
-            this.Actions.Add("TOUCH", this.Touch);
-            this.Actions.Add("PUSH", this.Push);
-            this.Actions.Add("PULL", this.Pull);
+            Actions.Add("USE", Use);
+            Actions.Add("TAKE", Take);
+            Actions.Add("TOUCH", Touch);
+            Actions.Add("PUSH", Push);
+            Actions.Add("PULL", Pull);
         }
-        public delegate bool interact();
-        public event interact Take_Event;
-        public event interact Push_Event;
-        public event interact Pull_Event;
+        public delegate bool interact(Actor a);
+        public interact Takeable;
+        public interact Pushable;
+        public interact Pullable;
 
-        public event interact PlayerUse_Event;
-        public event interact RoomUse_Event;
-
+        public interact PlayerUse_Event;
+        public interact RoomUse_Event;
         // public string Use() => Do(this.PlayerUse_Event, "use");
-        public string Use() => "Not implemented yet.";
+        public string Use(Actor a) => "Not implemented yet.";
 
-        public string Look() => Description;
-        public string Take() => Do(this.Take_Event, "take");
-        public string Touch() => Touched;
-        public string Push() => Do(this.Push_Event, "push");
-        public string Pull() => Do(this.Pull_Event, "pull");
+        public string Take(Actor a) => Do(a, Takeable, "take");
+        public string Touch(Actor a) => Touched;
+        public string Push(Actor a) => Do(a, Pushable, "push");
+        public string Pull(Actor a) => Do(a, Pullable, "pull");
         
-        private string Do(interact thing, string action)
+        private string Do(Actor a, interact thing, string action)
         {
             if (thing != null)
             {
-                if (!(bool)thing?.Invoke()) return $"{action}ing the {Name} failed.";
+                if (!(bool)thing?.Invoke(a)) return $"{action}ing the {Name} failed.";
                 return $"You {action} the {Name}.";
             }
-            //if ((bool)thing?.Invoke()) { return "thing"; }
             return $"You can't {action} that.";
         }
 
         private void DeleteRoomEvents()
         {
-            this.Take_Event = null;
-            this.Push_Event = null;
-            this.Pull_Event = null;
-            this.RoomUse_Event = null;
+            Takeable = null;
+            Pushable = null;
+            Pullable = null;
+            RoomUse_Event = null;
         }
         private void DeleteAllEvents()
         {
@@ -86,19 +77,21 @@ namespace ProceduralTextAdventure
         {
             DeleteRoomEvents();
         }
-        public bool GiveItem(Item item)
+
+        public bool GiveItem(Actor a)
         {
-            if (Creation.Instance.CurrentRoom.RemoveItem(item))
+            if (GameState.CurrentRoom.RemoveItem(this))
             {
-                return Creation.Instance.Player.AddItem(item);
+                return a.AddItem(this);
             }
             return false;
         }
-        public bool PushItem(Item item)
+
+        public bool PushItem(Actor a)
         {
             throw new NotImplementedException();
         }
-        public bool PullItem(Item item)
+        public bool PullItem(Actor a)
         {
             throw new NotImplementedException();
         }
