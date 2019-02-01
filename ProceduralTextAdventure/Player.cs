@@ -61,7 +61,7 @@ namespace ProceduralTextAdventure
         }
         public void Act(string[] full, string command)
         {
-            if (full.Count() == 1)
+            if (full.Length == 1)
             {
                 if (!SingleCommands.TryGetValue(command, out Func<string> a))
                 {
@@ -69,6 +69,7 @@ namespace ProceduralTextAdventure
                     return;
                 }
                 Print(a?.Invoke());
+                return;
             }
             if (!Commands.TryGetValue(command, out Func<string[], string> y))
             {
